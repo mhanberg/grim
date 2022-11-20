@@ -60,7 +60,8 @@ defmodule GrimTest do
       opts = [
         repo: Repo,
         query: Soul,
-        poll_interval: 0
+        poll_interval: 0,
+        caller: self()
       ]
 
       date =
@@ -74,7 +75,7 @@ defmodule GrimTest do
 
       {:ok, pid} = Reaper.start_link(opts)
 
-      state = :sys.get_state(pid)
+      assert_receive :reaped
 
       count =
         Soul

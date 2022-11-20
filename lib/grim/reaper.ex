@@ -13,7 +13,7 @@ defmodule Grim.Reaper do
   ]
 
   defmodule State do
-    defstruct [:repo, :query, :ttl, :batch_size, :poll_interval, :cold_polls]
+    defstruct [:repo, :query, :ttl, :batch_size, :poll_interval, :cold_polls, :caller]
   end
 
   def start_link(opts) do
@@ -30,7 +30,8 @@ defmodule Grim.Reaper do
       batch_size: opts[:batch_size],
       repo: opts[:repo],
       poll_interval: opts[:poll_interval],
-      cold_polls: 0
+      cold_polls: 0,
+      caller: opts[:caller]
     }
 
     schedule(opts[:poll_interval])
@@ -51,6 +52,8 @@ defmodule Grim.Reaper do
         _ ->
           poll_interval * cold_polls
       end
+
+    if state.caller, do: send(state.caller, :reaped)
 
     schedule(new_interval)
 
@@ -90,10 +93,6 @@ defmodule Grim.Reaper do
     IO.inspect("hello!!!")
 
     %{state | cold_polls: cold_polls}
-  end
-
-  defp schedule(0) do
-    send(self(), :reap)
   end
 
   defp schedule(timeout) do
