@@ -33,19 +33,13 @@ defmodule Grim.Reaper do
       cold_polls: 0
     }
 
-    Process.send_after(self(), :reap, opts[:poll_interval])
+    schedule(opts[:poll_interval])
 
     {:ok, state}
   end
 
   @impl true
-  def handle_info(
-        :reap,
-        %{
-          poll_interval: poll_interval,
-          cold_polls: cold_polls
-        } = state
-      ) do
+  def handle_info(:reap, %{poll_interval: poll_interval, cold_polls: cold_polls} = state) do
     IO.inspect("getting reaped")
     new_state = reap(state)
 
@@ -58,7 +52,7 @@ defmodule Grim.Reaper do
           poll_interval * cold_polls
       end
 
-    Process.send_after(self(), :reap, new_interval)
+    schedule(new_interval)
 
     {:noreply, new_state}
   end
@@ -96,5 +90,13 @@ defmodule Grim.Reaper do
     IO.inspect("hello!!!")
 
     %{state | cold_polls: cold_polls}
+  end
+
+  defp schedule(0) do
+    send(self(), :reap)
+  end
+
+  defp schedule(timeout) do
+    Process.send_after(self(), :reap, timeout)
   end
 end

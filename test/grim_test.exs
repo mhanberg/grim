@@ -72,7 +72,7 @@ defmodule GrimTest do
         %Soul{inserted_at: date}
         |> Repo.insert()
 
-      {:ok, pid} = GenServer.start(Reaper, opts)
+      {:ok, pid} = Reaper.start_link(opts)
 
       state = :sys.get_state(pid)
 
